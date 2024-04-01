@@ -141,15 +141,29 @@ def just_dodge():
             pygame.draw.rect(SCREEN, (200, 200, 200), text_rect.inflate(20, 20))
             SCREEN.blit(text, text_rect)
 
-            # Check for mouse click on the button
-            if event.type == pygame.MOUSEBUTTONDOWN and text_rect.collidepoint(event.pos):
-                if health > 0:
-                    level += 1
-                else:
-                    level = 1
-                health = 25
-                projectiles = []
-                timer = 60
+            # Add an "Exit" button
+            exit_text = font.render('Exit', 1, (255, 255, 255))
+            exit_text_rect = exit_text.get_rect(center=(WIDTH / 2, HEIGHT / 2 + 100))
+            exit_button_rect = exit_text_rect.inflate(20, 20)
+
+            # Check for mouse click on the buttons
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if text_rect.collidepoint(event.pos):
+                    if health > 0:
+                        level += 1
+                    else:
+                        level = 1
+                    health = 25
+                    projectiles = []
+                    timer = 60
+                elif exit_button_rect.collidepoint(event.pos):
+                    main_menu()
+
+            # Draw the buttons
+            pygame.draw.rect(SCREEN, (200, 200, 200), text_rect.inflate(20, 20))
+            SCREEN.blit(text, text_rect)
+            pygame.draw.rect(SCREEN, (200, 200, 200), exit_button_rect)
+            SCREEN.blit(exit_text, exit_text_rect)
         else:
             # Fill the screen with darker green
             SCREEN.fill((0, 100, 0))
@@ -177,7 +191,6 @@ def just_dodge():
         # Flip the display
         pygame.display.flip()
 
-
 def shooting_range():
     # Initialize Pygame
     pygame.init()
@@ -185,6 +198,10 @@ def shooting_range():
     # Set up some constants
     WIDTH, HEIGHT = 1280, 960
     SPEED = 1
+    CIRCLE_RADIUS = 20
+    CROSS_HAIR_SIZE = 20
+    PROJECTILE_SIZE = 15
+    PROJECTILE_SPEED = 2
 
     # Set up the display
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -192,11 +209,33 @@ def shooting_range():
     # Set up the rectangle
     RECT = pygame.Rect(WIDTH / 2, HEIGHT / 2, 40, 40)
 
+    # Set up the circle
+    circle_x = random.randint(0, WIDTH)
+    circle_y = random.randint(0, HEIGHT)
+
+    # Set up the exit button
+    font = pygame.font.Font(None, 36)
+    exit_text = font.render('Exit', 1, (255, 255, 255))
+    exit_text_rect = exit_text.get_rect(topright=(WIDTH - 10, 10))
+    exit_button_rect = exit_text_rect.inflate(20, 20)
+
+    # Set up the projectiles
+    projectiles = []
+
+    # Set up the firing rate
+    fire_rate = 100  # 10 game loops
+    last_fire = 0
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and exit_button_rect.collidepoint(event.pos):
+                main_menu()
+
+        # Get the mouse position
+        mouse_x, mouse_y = pygame.mouse.get_pos()
 
         # Get a list of all keys currently being pressed down
         keys = pygame.key.get_pressed()
@@ -219,14 +258,44 @@ def shooting_range():
             if RECT.x > WIDTH - RECT.width:
                 RECT.x = WIDTH - RECT.width
 
+        # Fire projectiles
+        if pygame.mouse.get_pressed()[0] and pygame.time.get_ticks() - last_fire >= fire_rate:
+            last_fire = pygame.time.get_ticks()
+            angle = math.atan2(mouse_y - RECT.centery, mouse_x - RECT.centerx)
+            projectiles.append([RECT.centerx, RECT.centery, math.cos(angle) * PROJECTILE_SPEED, math.sin(angle) * PROJECTILE_SPEED])
+
+        # Move the projectiles
+        for i, projectile in enumerate(projectiles):
+            projectile[0] += projectile[2]
+            projectile[1] += projectile[3]
+            if projectile[0] < 0 or projectile[0] > WIDTH or projectile[1] < 0 or projectile[1] > HEIGHT:
+                del projectiles[i]
+
         # Fill the screen with darker green
         SCREEN.fill((0, 100, 0))
 
         # Draw the rectangle (blue)
         pygame.draw.rect(SCREEN, (0, 0, 255), RECT)
 
+        # Draw the circle (red)
+        pygame.draw.circle(SCREEN, (255, 0, 0), (circle_x, circle_y), CIRCLE_RADIUS)
+
+        # Draw the cross hair (white)
+        pygame.draw.line(SCREEN, (255, 255, 255), (mouse_x - CROSS_HAIR_SIZE, mouse_y), (mouse_x + CROSS_HAIR_SIZE, mouse_y))
+        pygame.draw.line(SCREEN, (255, 255, 255), (mouse_x, mouse_y - CROSS_HAIR_SIZE), (mouse_x, mouse_y + CROSS_HAIR_SIZE))
+
+        # Draw the projectiles (blue)
+        for projectile in projectiles:
+            pygame.draw.rect(SCREEN, (0, 0, 255), pygame.Rect(projectile[0], projectile[1], PROJECTILE_SIZE, PROJECTILE_SIZE))
+
+        # Draw the exit button
+        pygame.draw.rect(SCREEN, (200, 200, 200), exit_button_rect)
+        SCREEN.blit(exit_text, exit_text_rect)
+
         # Flip the display
         pygame.display.flip()
+
+
 
 if __name__ == '__main__':
     main_menu()
