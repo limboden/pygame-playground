@@ -229,6 +229,9 @@ def shooting_range():
     fire_rate = 100  # 10 game loops
     last_fire = 0
 
+    # Set up the targets' projectiles
+    target_projectiles = []
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -280,6 +283,24 @@ def shooting_range():
                     circle_health -= damage
                     del projectiles[i]
 
+        # Move the targets' projectiles
+        for i, projectile in enumerate(target_projectiles):
+            projectile[0] += projectile[2]
+            projectile[1] += projectile[3]
+            if projectile[0] < 0 or projectile[0] > WIDTH or projectile[1] < 0 or projectile[1] > HEIGHT:
+                del target_projectiles[i]
+            else:
+                projectile_rect = pygame.Rect(projectile[0], projectile[1], PROJECTILE_SIZE, PROJECTILE_SIZE)
+                if projectile_rect.colliderect(RECT):
+                    # Handle collision with the player
+                    print("Player hit!")
+                    del target_projectiles[i]
+
+        # Make the targets shoot back
+        if random.random() < 0.01:  # 1% chance to shoot each game loop
+            angle = math.atan2(RECT.centery - circle_y, RECT.centerx - circle_x)
+            target_projectiles.append([circle_x, circle_y, math.cos(angle) * PROJECTILE_SPEED, math.sin(angle) * PROJECTILE_SPEED])
+
         # Respawn the circle if its health is 0
         if circle_health <= 0:
             circle_x = random.randint(WIDTH // 10, WIDTH - WIDTH // 10)
@@ -308,6 +329,10 @@ def shooting_range():
         for projectile in projectiles:
             pygame.draw.rect(SCREEN, (0, 0, 255), pygame.Rect(projectile[0], projectile[1], PROJECTILE_SIZE, PROJECTILE_SIZE))
 
+        # Draw the targets' projectiles
+        for projectile in target_projectiles:
+            pygame.draw.rect(SCREEN, (255, 0, 0), pygame.Rect(projectile[0], projectile[1], PROJECTILE_SIZE, PROJECTILE_SIZE))
+
         # Draw the exit button
         pygame.draw.rect(SCREEN, (200, 200, 200), exit_button_rect)
         SCREEN.blit(exit_text, exit_text_rect)
@@ -317,4 +342,3 @@ def shooting_range():
 
 if __name__ == '__main__':
     main_menu()
-
