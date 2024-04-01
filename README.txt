@@ -8,3 +8,10 @@ currently, when you lose a level, the game over screen has a next level
 button, and it actually takes you to the next level, even though you lost
 the level. not good. There should be 2 buttons, one that says restart level, and one that says, level 1 or something. 
 
+update:
+finished just dodge game, feels pretty good right now!
+
+working on shooting range. right now targets spawn with a random amount of health and i can shoot them to kill them. which is pretty cool!
+
+
+
