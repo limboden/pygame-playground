@@ -558,18 +558,26 @@ def platformer():
     # Set up some constants
     WIDTH, HEIGHT = 1280, 960
     SPEED = 5
+    GRAVITY = 1
 
     # Set up some variables
     x, y = 0, HEIGHT - 50
     jumping = False
-    jump_height = 0
+    on_platform = True
     jump_speed = 20
+    vertical_acceleration = 0
 
     # Set up the display
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # Set up the square
     square = pygame.Rect(x, y, 50, 50)
+
+    # Set up the platforms
+    platforms = [pygame.Rect(0, HEIGHT - 20, WIDTH, 20),  # floor
+                 pygame.Rect(200, HEIGHT - 120, 200, 20),  # platform
+                 pygame.Rect(600, HEIGHT - 220, 200, 20),  # platform
+                 ]
 
     clock = pygame.time.Clock()
 
@@ -589,18 +597,27 @@ def platformer():
             square.x += SPEED
 
         # Jump
-        if keys[pygame.K_w] or keys[pygame.K_SPACE]:
-            if not jumping:
-                jumping = True
-                jump_height = (-1) * jump_speed
+        if (keys[pygame.K_w] or keys[pygame.K_SPACE]) and on_platform:
+            on_platform = False
+            vertical_acceleration = (-1) * jump_speed
 
         # Apply gravity
-        if jumping:
-            square.y += jump_height
-            jump_height += 1
-            if jump_height > jump_speed:
-                jumping = False
-                jump_height = 0
+        if not on_platform:
+            square.y += vertical_acceleration
+            vertical_acceleration += GRAVITY
+            
+
+        # Check for collisions with platforms
+        for platform in platforms:
+            if square.colliderect(platform):
+                if square.bottom >= platform.bottom:
+                    square.bottom = platform.top
+                    on_platform = True
+                    vertical_acceleration = 0
+                else:
+                    on_platform = False
+
+                
 
         # Stop the square from going off the edge
         if square.x < 0:
@@ -611,10 +628,15 @@ def platformer():
         # Draw everything
         screen.fill((0, 0, 0))
         pygame.draw.rect(screen, (255, 255, 255), square)
+        for platform in platforms:
+            pygame.draw.rect(screen, (255, 255, 255), platform)
         pygame.display.flip()
 
         # Cap the frame rate
         clock.tick(60)
+
+
+
 
 
 
