@@ -614,8 +614,13 @@ def platformer():
                     square.bottom = platform.top
                     on_platform = True
                     vertical_acceleration = 0
+                    print("touching!")
                 else:
                     on_platform = False
+                    print("not touching!")
+            else:
+                print("not touching")
+                on_platform = False
 
                 
 
