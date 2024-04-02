@@ -5,14 +5,20 @@ import random
 
 def main_menu():
     pygame.init()
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((1280, 960))
     font = pygame.font.Font(None, 72)
     just_dodge_text = font.render('Just Dodge!', 1, (0, 0, 255))  # Blue color
     just_dodge_text_rect = just_dodge_text.get_rect(center=(400, 200))
     just_dodge_button_rect = just_dodge_text_rect.inflate(20, 20)
+
     shooting_range_text = font.render('Shooting Range', 1, (0, 0, 255))  # Blue color
     shooting_range_text_rect = shooting_range_text.get_rect(center=(400, 350))
     shooting_range_button_rect = shooting_range_text_rect.inflate(20, 20)
+
+    
+    platformer_text = font.render('Platformer', 1, (0, 0, 255))  # Blue
+    platformer_text_rect = platformer_text.get_rect(center=(400, 500))
+    platformer_button_rect = platformer_text_rect.inflate(20, 20)
 
     while True:
         for event in pygame.event.get():
@@ -23,12 +29,16 @@ def main_menu():
                 just_dodge()
             elif event.type == pygame.MOUSEBUTTONDOWN and shooting_range_button_rect.collidepoint(event.pos):
                 shooting_range()
+            elif event.type == pygame.MOUSEBUTTONDOWN and platformer_button_rect.collidepoint(event.pos):
+                platformer()
 
         screen.fill((0, 100, 0))  # Darker green color
         pygame.draw.rect(screen, (200, 200, 200), just_dodge_button_rect)
         screen.blit(just_dodge_text, just_dodge_text_rect)
         pygame.draw.rect(screen, (200, 200, 200), shooting_range_button_rect)
         screen.blit(shooting_range_text, shooting_range_text_rect)
+        pygame.draw.rect(screen, (200, 200, 200), platformer_button_rect)
+        screen.blit(platformer_text, platformer_text_rect)#for platformer
         pygame.display.flip()
 
 
@@ -539,6 +549,75 @@ def shooting_range():
 
         # Flip the display
         pygame.display.flip()
+
+def platformer():
+
+    # Initialize Pygame
+    pygame.init()
+
+    # Set up some constants
+    WIDTH, HEIGHT = 1280, 960
+    SPEED = 5
+
+    # Set up some variables
+    x, y = 0, HEIGHT - 50
+    jumping = False
+    jump_height = 0
+    jump_speed = 20
+
+    # Set up the display
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    # Set up the square
+    square = pygame.Rect(x, y, 50, 50)
+
+    clock = pygame.time.Clock()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Get the pressed keys
+        keys = pygame.key.get_pressed()
+
+        # Move the square
+        if keys[pygame.K_a]:
+            square.x -= SPEED
+        if keys[pygame.K_d]:
+            square.x += SPEED
+
+        # Jump
+        if keys[pygame.K_w] or keys[pygame.K_SPACE]:
+            if not jumping:
+                jumping = True
+                jump_height = (-1) * jump_speed
+
+        # Apply gravity
+        if jumping:
+            square.y += jump_height
+            jump_height += 1
+            if jump_height > jump_speed:
+                jumping = False
+                jump_height = 0
+
+        # Stop the square from going off the edge
+        if square.x < 0:
+            square.x = 0
+        if square.x > WIDTH - square.width:
+            square.x = WIDTH - square.width
+
+        # Draw everything
+        screen.fill((0, 0, 0))
+        pygame.draw.rect(screen, (255, 255, 255), square)
+        pygame.display.flip()
+
+        # Cap the frame rate
+        clock.tick(60)
+
+
+
 
 if __name__ == '__main__':
     main_menu()
