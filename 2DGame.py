@@ -552,33 +552,26 @@ def shooting_range():
 
 def platformer():
 
-    # Initialize Pygame
+    gravity = 0.75
+    jump_height = 20
+
+    # Player Properties
+    player_size = 50
+    player_pos = [50, 50]
+    player_vel = [0, 0]
+    is_jumping = False
+
+    # Platform Properties
+    platforms = [
+        {"x": 0, "y": 550, "w": 800, "h": 20},
+        {"x": 200, "y": 400, "w": 200, "h": 20},
+        {"x": 500, "y": 300, "w": 100, "h": 20},
+        {"x": 700, "y": 200, "w": 50, "h": 20},
+    ]
+
+    # Pygame Initialization
     pygame.init()
-
-    # Set up some constants
-    WIDTH, HEIGHT = 1280, 960
-    SPEED = 5
-    GRAVITY = 1
-
-    # Set up some variables
-    x, y = 0, HEIGHT - 50
-    jumping = False
-    on_platform = True
-    jump_speed = 20
-    vertical_acceleration = 0
-
-    # Set up the display
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
-    # Set up the square
-    square = pygame.Rect(x, y, 50, 50)
-
-    # Set up the platforms
-    platforms = [pygame.Rect(0, HEIGHT - 20, WIDTH, 20),  # floor
-                 pygame.Rect(200, HEIGHT - 120, 200, 20),  # platform
-                 pygame.Rect(600, HEIGHT - 220, 200, 20),  # platform
-                 ]
-
+    screen = pygame.display.set_mode((800, 600))
     clock = pygame.time.Clock()
 
     while True:
@@ -586,58 +579,48 @@ def platformer():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and not is_jumping:
+                    player_vel[1] -= jump_height
+                    is_jumping = True
 
-        # Get the pressed keys
+        # Move Player
         keys = pygame.key.get_pressed()
-
-        # Move the square
         if keys[pygame.K_a]:
-            square.x -= SPEED
+            player_pos[0] -= 5
         if keys[pygame.K_d]:
-            square.x += SPEED
+            player_pos[0] += 5
 
-        # Jump
-        if (keys[pygame.K_w] or keys[pygame.K_SPACE]) and on_platform:
-            on_platform = False
-            vertical_acceleration = (-1) * jump_speed
+        player_pos[1] += player_vel[1]
 
-        # Apply gravity
-        if not on_platform:
-            square.y += vertical_acceleration
-            vertical_acceleration += GRAVITY
-            
+        # Apply Gravity
+        player_vel[1] += gravity
 
-        # Check for collisions with platforms
+        # Collision with Platforms
         for platform in platforms:
-            if square.colliderect(platform):
-                if square.bottom >= platform.bottom:
-                    square.bottom = platform.top
-                    on_platform = True
-                    vertical_acceleration = 0
-                    print("touching!")
-                else:
-                    on_platform = False
-                    print("not touching!")
-            else:
-                print("not touching")
-                on_platform = False
+            if (player_pos[1] + player_size > platform["y"] and
+                player_pos[1] < platform["y"] + platform["h"] and
+                player_pos[0] + player_size > platform["x"] and
+                player_pos[0] < platform["x"] + platform["w"]):
+                player_pos[1] = platform["y"] - player_size
+                player_vel[1] = 0
+                is_jumping = False
 
-                
+        # Keep Player on Screen
+        if player_pos[1] > screen.get_height() - player_size:
+            player_pos[1] = screen.get_height() - player_size
+            player_vel[1] = 0
 
-        # Stop the square from going off the edge
-        if square.x < 0:
-            square.x = 0
-        if square.x > WIDTH - square.width:
-            square.x = WIDTH - square.width
-
-        # Draw everything
+        # Draw Everything
         screen.fill((0, 0, 0))
-        pygame.draw.rect(screen, (255, 255, 255), square)
+        pygame.draw.rect(screen, (255, 0, 0), (player_pos[0], player_pos[1], player_size, player_size))
+
         for platform in platforms:
-            pygame.draw.rect(screen, (255, 255, 255), platform)
+            pygame.draw.rect(screen, (255, 255, 255), (platform["x"], platform["y"], platform["w"], platform["h"]))
+
         pygame.display.flip()
 
-        # Cap the frame rate
+        # Cap at 60 FPS
         clock.tick(60)
 
 
