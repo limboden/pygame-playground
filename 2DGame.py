@@ -20,6 +20,10 @@ def main_menu():
     platformer_text_rect = platformer_text.get_rect(center=(400, 500))
     platformer_button_rect = platformer_text_rect.inflate(20, 20)
 
+    rpg_text = font.render('RPG', 1, (0, 0, 255))  # Blue
+    rpg_text_rect = rpg_text.get_rect(center=(400, 650))
+    rpg_button_rect = rpg_text_rect.inflate(20, 20)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -31,6 +35,9 @@ def main_menu():
                 shooting_range()
             elif event.type == pygame.MOUSEBUTTONDOWN and platformer_button_rect.collidepoint(event.pos):
                 platformer()
+            elif event.type == pygame.MOUSEBUTTONDOWN and rpg_button_rect.collidepoint(event.pos):
+                rpg()
+
 
         screen.fill((0, 100, 0))  # Darker green color
         pygame.draw.rect(screen, (200, 200, 200), just_dodge_button_rect)
@@ -39,6 +46,8 @@ def main_menu():
         screen.blit(shooting_range_text, shooting_range_text_rect)
         pygame.draw.rect(screen, (200, 200, 200), platformer_button_rect)
         screen.blit(platformer_text, platformer_text_rect)#for platformer
+        pygame.draw.rect(screen, (200, 200, 200), rpg_button_rect)
+        screen.blit(rpg_text, rpg_text_rect)#for platformer
         pygame.display.flip()
 
 
@@ -274,13 +283,33 @@ def shooting_range():
     # Set up the score
     score = 0
 
+        # Set up the weapons
+    weapons = {
+        'SMG': {'fire_rate': 2, 'damage': 0.5},
+        'Rifle': {'fire_rate': 0.5, 'damage': 2}
+    }
+
+    # Set up the current weapon
+    current_weapon = 'SMG'
+
+    # Set up the weapon buttons
+    weapon_buttons = {
+        'SMG': {'rect': pygame.Rect(10, 10, 100, 50), 'text': font.render('SMG', 1, (255, 255, 255))},
+        'Rifle': {'rect': pygame.Rect(120, 10, 100, 50), 'text': font.render('Rifle', 1, (255, 255, 255))}
+    }
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN and exit_button_rect.collidepoint(event.pos):
-                main_menu()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for weapon, button in weapon_buttons.items():
+                    if button['rect'].collidepoint(event.pos):
+                        current_weapon = weapon
+                        fire_rate = weapons[weapon]['fire_rate']
+                        damage = weapons[weapon]['damage']
+
 
         # Get the mouse position
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -350,19 +379,44 @@ def shooting_range():
             circle_y = random.randint(HEIGHT // 10, HEIGHT - HEIGHT // 10)
             circle_health = random.randint(100, 500)
 
-        # Check for game over
-        if player_health <= 0:
-            # Game over screen
-            SCREEN.fill((0, 0, 0))
-            font = pygame.font.Font(None, 72)
-            text = font.render('GAME OVER', 1, (255, 0, 0))
-            SCREEN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
-            font = pygame.font.Font(None, 36)
-            text = font.render(f'Score: {score}', 1, (255, 255, 255))
-            SCREEN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 + 50))
-            pygame.display.flip()
-            pygame.time.wait(2000)  # Wait for 2 seconds
-            main_menu()
+            # Draw the weapon buttons
+        for weapon, button in weapon_buttons.items():
+            pygame.draw.rect(SCREEN, (200, 200, 200), button['rect'])
+            SCREEN.blit(button['text'], button['rect'].move(10, 10))
+
+        # Fire projectiles
+        if pygame.mouse.get_pressed()[0] and pygame.time.get_ticks() - last_fire >= fire_rate:
+            last_fire = pygame.time.get_ticks()
+            angle = math.atan2(mouse_y - RECT.centery, mouse_x - RECT.centerx)
+            projectiles.append([RECT.centerx, RECT.centery, math.cos(angle) * PROJECTILE_SPEED, math.sin(angle) * PROJECTILE_SPEED])
+
+        # Move the projectiles
+        for i, projectile in enumerate(projectiles):
+            projectile[0] += projectile[2]
+            projectile[1] += projectile[3]
+            if projectile[0] < 0 or projectile[0] > WIDTH or projectile[1] < 0 or projectile[1] > HEIGHT:
+                del projectiles[i]
+            else:
+                projectile_rect = pygame.Rect(projectile[0], projectile[1], PROJECTILE_SIZE, PROJECTILE_SIZE)
+                if projectile_rect.colliderect(pygame.Rect(circle_x, circle_y, CIRCLE_RADIUS * 2, CIRCLE_RADIUS * 2)):
+                    damage = random.randint(MIN_WEAPON_DMG, MAX_WEAPON_DMG) * damage
+                    circle_health -= damage
+                    del projectiles[i]
+                    score += 1
+
+            # Check for game over
+            if player_health <= 0:
+                # Game over screen
+                SCREEN.fill((0, 0, 0))
+                font = pygame.font.Font(None, 72)
+                text = font.render('GAME OVER', 1, (255, 0, 0))
+                SCREEN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
+                font = pygame.font.Font(None, 36)
+                text = font.render(f'Score: {score}', 1, (255, 255, 255))
+                SCREEN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 + 50))
+                pygame.display.flip()
+                pygame.time.wait(2000)  # Wait for 2 seconds
+                main_menu()
 
         # Fill the screen with darker green
         SCREEN.fill((0, 100, 0))
@@ -403,28 +457,73 @@ def shooting_range():
         pygame.display.flip()
 
 
+
+
+
 def platformer():
+
+
+
 
     gravity = 0.75
     jump_height = 20
 
     # Player Properties
     player_size = 50
-    player_pos = [50, 50]
+    player_pos = [50, 1050]  # Start at the bottom of the screen
     player_vel = [0, 0]
     is_jumping = False
 
     # Platform Properties
     platforms = [
-        {"x": 0, "y": 550, "w": 800, "h": 20},
-        {"x": 200, "y": 400, "w": 200, "h": 20},
-        {"x": 500, "y": 300, "w": 100, "h": 20},
-        {"x": 700, "y": 200, "w": 50, "h": 20},
-    ]
 
+    
+    
+    [
+    {"x": 0, "y": 1100, "w": 800, "h": 20},
+    {"x": 100, "y": 900, "w": 200, "h": 20},
+    {"x": 400, "y": 900, "w": 200, "h": 20},
+    {"x": 200, "y": 700, "w": 200, "h": 20},
+    {"x": 600, "y": 700, "w": 200, "h": 20},
+    {"x": 300, "y": 500, "w": 200, "h": 20},
+    {"x": 700, "y": 500, "w": 200, "h": 20},
+    {"x": 400, "y": 300, "w": 200, "h": 20},
+    {"x": 600, "y": 100, "w": 200, "h": 20},
+],
+    
+    [
+    {"x": 200, "y": 1000, "w": 200, "h": 20},
+    {"x": 400, "y": 700, "w": 200, "h": 20},
+    {"x": 600, "y": 500, "w": 200, "h": 20},
+    {"x": 200, "y": 300, "w": 200, "h": 20},
+    {"x": 400, "y": 100, "w": 200, "h": 20},
+], 
+
+[ 
+    {"x": 200, "y": 1000, "w": 200, "h": 20},
+    {"x": 500, "y": 700, "w": 200, "h": 20},
+    {"x": 100, "y": 500, "w": 200, "h": 20},
+    {"x": 300, "y": 300, "w": 200, "h": 20},
+    {"x": 600, "y": 100, "w": 200, "h": 20},
+], 
+
+[
+    {"x": 150, "y": 1000, "w": 200, "h": 20},
+    {"x": 0, "y": 700, "w": 200, "h": 20},
+    {"x": 0, "y": 500, "w": 200, "h": 20},
+    {"x": 0, "y": 400, "w": 300, "h": 20},
+    {"x": 680, "y": 700, "w": 120, "h": 20},
+    {"x": 650, "y": 500, "w": 150, "h": 20},
+    {"x": 600, "y": 300, "w": 200, "h": 20},
+    {"x": 600, "y": 100, "w": 200, "h": 20},
+]
+    
+    ]
+    
+    level = 0
     # Pygame Initialization
     pygame.init()
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((800, 1200))  # Make the window taller
     clock = pygame.time.Clock()
 
     while True:
@@ -450,7 +549,7 @@ def platformer():
         player_vel[1] += gravity
 
         # Collision with Platforms
-        for platform in platforms:
+        for platform in platforms[level]:
             if (player_pos[1] + player_size > platform["y"] and
                 player_pos[1] < platform["y"] + platform["h"] and
                 player_pos[0] + player_size > platform["x"] and
@@ -459,17 +558,23 @@ def platformer():
                 player_vel[1] = 0
                 is_jumping = False
 
-        # Keep Player on Screen
-        if player_pos[1] > screen.get_height() - player_size:
+        # Keep Player on Screen    
+        if player_pos[1] < 1:
             player_pos[1] = screen.get_height() - player_size
-            player_vel[1] = 0
+            level += 1
+
+        if player_pos[1] > 1200:
+            player_pos[1] = 1
+            level -= 1
 
         # Draw Everything
         screen.fill((0, 0, 0))
         pygame.draw.rect(screen, (255, 0, 0), (player_pos[0], player_pos[1], player_size, player_size))
 
-        for platform in platforms:
+        for platform in platforms[level]:
             pygame.draw.rect(screen, (255, 255, 255), (platform["x"], platform["y"], platform["w"], platform["h"]))
+
+            
 
         pygame.display.flip()
 
@@ -477,10 +582,65 @@ def platformer():
         clock.tick(60)
 
 
+def rpg():
+     # Initialize Pygame
+    pygame.init()
 
+    # Set up some constants
+    WIDTH, HEIGHT = 800, 600
+    PLAYER_SIZE = 50
 
+    # Set up the display
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
+    # Set up the clock
+    clock = pygame.time.Clock()
 
+    # Set up the map
+    map = pygame.Rect(0, 0, 2000, 2000)
+    grass = pygame.Rect(0, 0, 1000, 1000)
+    dirt = pygame.Rect(1000, 0, 500, 1000)
+    water = pygame.Rect(1500, 0, 500, 1000)
+
+    # Set up the player
+    player = pygame.Rect(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+
+    # Set up the offset
+    offset_x = 0
+    offset_y = 0
+
+    # Game loop
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Get a list of all keys currently being pressed down
+        keys = pygame.key.get_pressed()
+
+        # Move the map
+        if keys[pygame.K_UP]:
+            offset_y -= 5
+        if keys[pygame.K_DOWN]:
+            offset_y += 5
+        if keys[pygame.K_LEFT]:
+            offset_x -= 5
+        if keys[pygame.K_RIGHT]:
+            offset_x += 5
+
+        # Draw everything
+        screen.fill((0, 0, 0))
+        pygame.draw.rect(screen, (0, 255, 0), grass.move(-offset_x, -offset_y))  # Green for grass
+        pygame.draw.rect(screen, (139, 69, 19), dirt.move(-offset_x, -offset_y))  # Brown for dirt
+        pygame.draw.rect(screen, (0, 0, 255), water.move(-offset_x, -offset_y))  # Blue for water
+        pygame.draw.rect(screen, (255, 255, 255), player)
+
+        # Flip the display
+        pygame.display.flip()
+
+        # Cap the frame rate
+        clock.tick(60)
 
 if __name__ == '__main__':
     main_menu()
