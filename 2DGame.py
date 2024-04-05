@@ -583,12 +583,13 @@ def platformer():
 
 
 def rpg():
-     # Initialize Pygame
+    # Initialize Pygame
     pygame.init()
 
     # Set up some constants
     WIDTH, HEIGHT = 800, 600
     PLAYER_SIZE = 50
+    BORDER_SIZE = 10  # Thickness of the border
 
     # Set up the display
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -619,21 +620,42 @@ def rpg():
         # Get a list of all keys currently being pressed down
         keys = pygame.key.get_pressed()
 
-        # Move the map
-        if keys[pygame.K_UP]:
-            offset_y -= 5
-        if keys[pygame.K_DOWN]:
+        # Player movement
+        if keys[pygame.K_w]:
             offset_y += 5
-        if keys[pygame.K_LEFT]:
-            offset_x -= 5
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_s]:
+            offset_y -= 5
+        if keys[pygame.K_a]:
             offset_x += 5
+        if keys[pygame.K_d]:
+            offset_x -= 5
+
+        # Check for collision with the border
+        if player.x - BORDER_SIZE <= 0:
+            if keys[pygame.K_a]:
+                offset_x = 0
+        if player.x + player.width + BORDER_SIZE >= WIDTH:
+            if keys[pygame.K_d]:
+                offset_x = 0
+        if player.y - BORDER_SIZE <= 0:
+            if keys[pygame.K_w]:
+                offset_y = 0
+        if player.y + player.height + BORDER_SIZE >= HEIGHT:
+            if keys[pygame.K_s]:
+                offset_y = 0
+
+        # Calculate camera position
+        player.x = WIDTH // 2
+        player.y = HEIGHT // 2
+
+        # Move the map in the opposite direction to simulate player movement
 
         # Draw everything
         screen.fill((0, 0, 0))
-        pygame.draw.rect(screen, (0, 255, 0), grass.move(-offset_x, -offset_y))  # Green for grass
-        pygame.draw.rect(screen, (139, 69, 19), dirt.move(-offset_x, -offset_y))  # Brown for dirt
-        pygame.draw.rect(screen, (0, 0, 255), water.move(-offset_x, -offset_y))  # Blue for water
+        pygame.draw.rect(screen, (200, 200, 200), map)  # Gray border
+        pygame.draw.rect(screen, (0, 255, 0), grass.move(offset_x, offset_y))  # Green for grass
+        pygame.draw.rect(screen, (139, 69, 19), dirt.move(offset_x, offset_y))  # Brown for dirt
+        pygame.draw.rect(screen, (0, 0, 255), water.move(offset_x, offset_y))  # Blue for water
         pygame.draw.rect(screen, (255, 255, 255), player)
 
         # Flip the display
@@ -641,6 +663,13 @@ def rpg():
 
         # Cap the frame rate
         clock.tick(60)
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     main_menu()
