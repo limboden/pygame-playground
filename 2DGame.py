@@ -2,6 +2,9 @@ import pygame
 import sys
 import math
 import random
+import rpg
+
+
 
 def main_menu():
     pygame.init()
