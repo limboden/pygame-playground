@@ -2,7 +2,6 @@ import pygame
 from map import Map
 import sys
 import random
-from grass import Grass
 
 
 
