@@ -14,10 +14,25 @@ class Game:
         self.BORDER_SIZE = 10
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.clock = pygame.time.Clock()
+        self.BEACH = {
+            "x1": 0, 
+            "y1": 1000, 
+            'x2': 1000, 
+            'y2': 800, 
+            'color': (255,238,173)
+        }
+        self.WATER = {
+            "x1": 1500, 
+            "y1": 0, 
+            'x2': 500, 
+            'y2': 1000, 
+            'color': (0, 0, 255)
+        }
         self.map_elements = [
+            [Map(self.BEACH['x1'],self.BEACH['y1'],self.BEACH['x2'],self.BEACH['y2']), self.BEACH['color']],
+            [Map(self.WATER['x1'],self.WATER['y1'],self.WATER['x2'],self.WATER['y2']), self.WATER['color']],
             [Map(0, 0, 1000, 1000), (0, 255, 0)],  # Green for grass
             [Map(1000, 0, 500, 1000), (139, 69, 19)],  # Brown for dirt
-            [Map(1500, 0, 500, 1000), (0, 0, 255)],  # Blue for water
         ]
 
         #creating randomly generated grass in the grass area.
@@ -32,8 +47,8 @@ class Game:
 
 
         self.player = pygame.Rect(self.WIDTH / 2, self.HEIGHT / 2, self.PLAYER_SIZE, self.PLAYER_SIZE)
-        self.offset_x = 0
-        self.offset_y = 0
+        self.offset_x = 0 #this is just default
+        self.offset_y = -1300 #this is to make sure we spawn at the beach
 
     def handle_events(self):
         for event in pygame.event.get():
