@@ -1,28 +1,35 @@
 import pygame
-from player import Player
-from map import Map
 import sys
 
-class Game:
-    def __init__(self):
-        self.screen = pygame.display.set_mode((800, 600))
-        self.clock = pygame.time.Clock()
-        self.player = Player()
-        self.map = Map()
 
-    def run(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+# Initialize Pygame
+pygame.init()
 
-            self.player.update()
-            self.map.update(self.player.offset_x, self.player.offset_y)
+# Set the window size
+screen_width = 640
+screen_height = 480
+screen = pygame.display.set_mode((screen_width, screen_height))
 
-            self.screen.fill((0, 0, 0))
-            self.map.draw(self.screen)
-            self.player.draw(self.screen)
+# Load the image
+image = pygame.image.load('sand2.jpg')
 
-            pygame.display.flip()
-            self.clock.tick(60)
+# Set the image's position
+image_x = 100
+image_y = 100
+
+# Main game loop
+while True:
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # Clear the screen
+    screen.fill((255, 255, 255))
+
+    # Draw the image
+    screen.blit(image, (image_x, image_y))
+
+    # Update the display
+    pygame.display.flip()
