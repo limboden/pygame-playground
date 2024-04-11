@@ -97,7 +97,10 @@ while True:
     for element in map_all:
         element[0].x += offset_x
         element[0].y += offset_y
-        pygame.draw.rect(screen, element[1], element[0])
+        top_left = [element[0].left,element[0].top]
+        bottom_right = [element[0].left + element[0].width, element[0].top + element[0].height]
+        if(bottom_right[0] > 0 and top_left[0] < WIDTH and bottom_right[1] > 0 and top_left[1] < HEIGHT):
+            pygame.draw.rect(screen, element[1], element[0])
 
     total_len = 1000
     total_height = 800
