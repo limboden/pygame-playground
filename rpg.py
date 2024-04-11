@@ -60,6 +60,8 @@ player = pygame.Rect(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
 offset_x = 0
 offset_y = -1300 
 
+isFirst = True
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -72,6 +74,14 @@ while True:
     else:
         PLAYER_SPEED = 5
     
+    if isFirst: 
+        offset_y = -1300
+        isFirst = False
+    else: offset_y = 0
+    offset_x = 0
+
+
+
     if keys[pygame.K_w]:
         offset_y += PLAYER_SPEED
     if keys[pygame.K_s]:
@@ -81,41 +91,34 @@ while True:
     if keys[pygame.K_d]:
         offset_x -= PLAYER_SPEED
 
-    # Make the enemy shoot every second
-    if random.random() < 1/60: 
-        projectile = pygame.Rect(enemy1.x, enemy1.y, 10, 10)
-        dx = (player.centerx - projectile.centerx) * 0.05
-        dy = (player.centery - projectile.centery) * 0.05
-        projectiles.append([projectile, [dx, dy]])
-
     map_all = map_elements + map_entities
 
     screen.fill((0, 0, 0))
     for element in map_all:
-        pygame.draw.rect(screen, element[1], element[0].move(offset_x, offset_y))
+        element[0].x += offset_x
+        element[0].y += offset_y
+        pygame.draw.rect(screen, element[1], element[0])
 
     total_len = 1000
     total_height = 800
     temp_x = 0
     temp_y = 0
+    image_x += offset_x
+    image_y += offset_y
     while total_height > temp_y:
         while total_len > temp_x:
-            screen.blit(resized_image, (image_x + temp_x + offset_x, image_y + temp_y + offset_y))
+            screen.blit(resized_image, (image_x + temp_x, image_y + temp_y))
             temp_x += 128
         temp_y += 128
         temp_x = 0
-
-    # Move and draw projectiles
-    for i, (projectile, direction) in enumerate(projectiles):
-        projectile.move_ip(direction)
-        pygame.draw.rect(screen, (255, 0, 0), projectile.move(offset_x, offset_y))
-
-        # Check collision with player
-        if projectile.colliderect(player):
-            print("Player hit!")
-            #del projectiles[i]
+        
+    print(enemy1.x)
 
     pygame.draw.rect(screen, (255, 255, 255), player)
+
+    offset_x = 0
+    offset_y = 0
+
 
     pygame.display.flip()
     clock.tick(60)
