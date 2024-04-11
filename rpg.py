@@ -1,123 +1,121 @@
 import pygame
-from map import Map
 import sys
 import random
 from Enemy import Enemy
 
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+PLAYER_SIZE = 50
+BORDER_SIZE = 10
+PLAYER_SPEED = 5
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
+
+WATER = {
+    "x1": 0,
+    "y1": 1800,
+    'x2': 1000,
+    'y2': 2000,
+    'color': (0, 150, 255)
+}
+
+#holds projectiles
+projectiles = []
+
+enemy1 = pygame.Rect(400, 300, 30, 30)
+
+map_elements = [
+    [pygame.Rect(WATER['x1'], WATER['y1'], WATER['x2'], WATER['y2']), WATER['color']],
+    [pygame.Rect(0, 0, 1000, 1000), (0, 255, 0)],  # Green for grass
+    [pygame.Rect(1000, 0, 500, 1000), (139, 69, 19)], # Brown for dirt
+]
+
+#creating randomly generated grass in the grass area.
+#currently between 0,0 and 1000, 1000
+GRASS_SIZE = 20
+GRASS_COLOR = (0, 200, 0)
+for _ in range(0, 100): #number of grass
+    x = random.randint(0, 1000)
+    y = random.randint(0, 1000)
+    map_elements.append([pygame.Rect(x, y, GRASS_SIZE, GRASS_SIZE), GRASS_COLOR])
 
 
-class Game:
-    def __init__(self):
-        pygame.init()
-        self.WIDTH, self.HEIGHT = 800, 600
-        self.PLAYER_SIZE = 50
-        self.BORDER_SIZE = 10
-        self.PLAYER_SPEED = 5
-        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
-        self.clock = pygame.time.Clock()
-        self.WATER = {
-            "x1": 0, 
-            "y1": 1800, 
-            'x2': 1000, 
-            'y2': 2000, 
-            'color': (0, 150, 255)
-        }
-
-        #holds projectiles
-        self.projectiles = []
-
-        self.enemy1 = Enemy(400, 1000, 30)
-        self.enemy1mapped = Map(self.enemy1.x, self.enemy1.y, self.enemy1.size, self.enemy1.size)
+map_entities = [
+    [enemy1, (255,0,0)]
+]
 
 
-        self.map_elements = [
-            [Map(self.WATER['x1'],self.WATER['y1'],self.WATER['x2'],self.WATER['y2']), self.WATER['color']],
-            [Map(0, 0, 1000, 1000), (0, 255, 0)],  # Green for grass
-            [Map(1000, 0, 500, 1000), (139, 69, 19)], # Brown for dirt
-            [self.enemy1mapped, (0,0,255)]  
-        ]
 
-        #creating randomly generated grass in the grass area.
-        #currently between 0,0 and 1000, 1000
-        GRASS_SIZE = 20
-        GRASS_COLOR = (0, 200, 0)
-        for _ in range(0, 100): #number of grass
-          x = random.randint(0, 1000)
-          y = random.randint(0, 1000)
-          self.map_elements.append([Map(x, y, GRASS_SIZE, GRASS_SIZE), GRASS_COLOR])
-
-        self.image = pygame.image.load('sand2.jpg')
+image = pygame.image.load('sand2.jpg')
         
-        self.image_x = 0
-        self.image_y = 1000
-        original_width = original_height = 512 
-        # Calculate the new width and height while maintaining the aspect ratio
-        new_width = int(original_width * 0.25)
-        new_height = int(original_height * 0.25)
+image_x = 0
+image_y = 1000
+original_width = original_height = 512 
+new_width = int(original_width * 0.25)
+new_height = int(original_height * 0.25)
 
-        # Resize the image
-        self.resized_image = pygame.transform.scale(self.image, (new_width, new_height))
+resized_image = pygame.transform.scale(image, (new_width, new_height))
 
+player = pygame.Rect(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+offset_x = 0
+offset_y = -1300 
 
-        self.player = pygame.Rect(self.WIDTH / 2, self.HEIGHT / 2, self.PLAYER_SIZE, self.PLAYER_SIZE)
-        self.offset_x = 0 #this is just default
-        self.offset_y = -1300 #this is to make sure we spawn at the beach
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+    keys = pygame.key.get_pressed()
+    if player.colliderect((0, 1800),(1000,2000)):
+        PLAYER_SPEED = 3
+    else:
+        PLAYER_SPEED = 5
+    
+    if keys[pygame.K_w]:
+        offset_y += PLAYER_SPEED
+    if keys[pygame.K_s]:
+        offset_y -= PLAYER_SPEED
+    if keys[pygame.K_a]:
+        offset_x += PLAYER_SPEED
+    if keys[pygame.K_d]:
+        offset_x -= PLAYER_SPEED
 
-    def update(self):
-        self.PLAYER_SPEED = 5
-        if(self.player.colliderect((0, 1800),(1000,2000))):
-            self.PLAYER_SPEED = 3
-        print(self.PLAYER_SPEED)
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            self.offset_y += self.PLAYER_SPEED
-        if keys[pygame.K_s]:
-            self.offset_y -= self.PLAYER_SPEED
-        if keys[pygame.K_a]:
-            self.offset_x += self.PLAYER_SPEED
-        if keys[pygame.K_d]:
-            self.offset_x -= self.PLAYER_SPEED
+    # Make the enemy shoot every second
+    if random.random() < 1/60: 
+        projectile = pygame.Rect(enemy1.x, enemy1.y, 10, 10)
+        dx = (player.centerx - projectile.centerx) * 0.05
+        dy = (player.centery - projectile.centery) * 0.05
+        projectiles.append([projectile, [dx, dy]])
 
-    def draw(self):
-        self.screen.fill((0, 0, 0))
-        for element in self.map_elements:
-            pygame.draw.rect(self.screen, element[1], element[0].rect.move(self.offset_x, self.offset_y))
-        
-        # Draw the image
-        total_len = 1000
-        total_height = 800
+    map_all = map_elements + map_entities
+
+    screen.fill((0, 0, 0))
+    for element in map_all:
+        pygame.draw.rect(screen, element[1], element[0].move(offset_x, offset_y))
+
+    total_len = 1000
+    total_height = 800
+    temp_x = 0
+    temp_y = 0
+    while total_height > temp_y:
+        while total_len > temp_x:
+            screen.blit(resized_image, (image_x + temp_x + offset_x, image_y + temp_y + offset_y))
+            temp_x += 128
+        temp_y += 128
         temp_x = 0
-        temp_y = 0
 
-        while total_height > temp_y:
-            while total_len > temp_x:
-                self.screen.blit(self.resized_image, (self.image_x + temp_x + self.offset_x, self.image_y + temp_y + self.offset_y))
-                temp_x += 128
-            temp_y += 128
-            temp_x = 0
+    # Move and draw projectiles
+    for i, (projectile, direction) in enumerate(projectiles):
+        projectile.move_ip(direction)
+        pygame.draw.rect(screen, (255, 0, 0), projectile.move(offset_x, offset_y))
 
-        # Draw the enemy rectangle
-        pygame.draw.rect(self.screen, (255,0,0), (self.enemy1.x, self.enemy1.y, self.enemy1.size, self.enemy1.size))
+        # Check collision with player
+        if projectile.colliderect(player):
+            print("Player hit!")
+            #del projectiles[i]
 
+    pygame.draw.rect(screen, (255, 255, 255), player)
 
-
-        pygame.draw.rect(self.screen, (255, 255, 255), self.player)
-
-    def run(self):
-        while True:
-            self.handle_events()
-            self.update()
-            self.draw()
-            pygame.display.flip()
-            self.clock.tick(60)
-
-
-if __name__ == "__main__":
-    game = Game()
-    game.run()
+    pygame.display.flip()
+    clock.tick(60)
