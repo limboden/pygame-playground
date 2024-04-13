@@ -2,6 +2,28 @@ import pygame
 import sys
 import random
 from Enemy import Enemy
+import math
+
+
+class Projectile:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+projectiles = []
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 pygame.init()
 WIDTH, HEIGHT = 800, 600
@@ -45,6 +67,13 @@ map_entities = [
 ]
 
 
+total_len = 1000
+total_height = 800
+image_surface = pygame.Surface((total_len, total_height))
+
+
+
+
 
 image = pygame.image.load('sand2.jpg')
         
@@ -55,6 +84,19 @@ new_width = int(original_width * 0.25)
 new_height = int(original_height * 0.25)
 
 resized_image = pygame.transform.scale(image, (new_width, new_height))
+
+temp_x = 0
+temp_y = 0
+total_len = 1000
+total_height = 800
+while total_height > temp_y:
+    while total_len > temp_x:
+        # Blit the resized_image onto the image_surface at the current position
+        image_surface.blit(resized_image, (temp_x, temp_y))
+        temp_x += 128
+    temp_y += 128
+    temp_x = 0
+
 
 player = pygame.Rect(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
 offset_x = 0
@@ -102,26 +144,47 @@ while True:
         if(bottom_right[0] > 0 and top_left[0] < WIDTH and bottom_right[1] > 0 and top_left[1] < HEIGHT):
             pygame.draw.rect(screen, element[1], element[0])
 
-    total_len = 1000
-    total_height = 800
-    temp_x = 0
-    temp_y = 0
     image_x += offset_x
     image_y += offset_y
-    while total_height > temp_y:
-        while total_len > temp_x:
-            screen.blit(resized_image, (image_x + temp_x, image_y + temp_y))
-            temp_x += 128
-        temp_y += 128
-        temp_x = 0
-        
-    print(enemy1.x)
+    screen.blit(image_surface, (image_x, image_y))  # Draw the image_surface onto the screen
+ 
 
     pygame.draw.rect(screen, (255, 255, 255), player)
 
     offset_x = 0
     offset_y = 0
 
+
+        # Check for collision with the enemy
+    enemy_rect = pygame.Rect(enemy1.left, enemy1.top, enemy1.width, enemy1.height)
+    player_rect = pygame.Rect(player.left, player.top, player.width, player.height)
+    distance_to_player = math.sqrt(math.pow(enemy_rect.centerx - player_rect.centerx, 2) + math.pow(enemy_rect.centery - player_rect.centery, 2))
+
+    # If the distance between the enemy and the player is less than or equal to some threshold value,
+    # then we want to fire a projectile from the enemy towards the player.
+    threshold_distance = 100 # adjust this as needed
+    if distance_to_player <= threshold_distance:
+        projectile_speed = 5 # speed at which the projectile moves
+        angle_to_player = math.atan2(player_rect.centery - enemy_rect.centery, player_rect.centerx - enemy_rect.centerx)
+        dx = projectile_speed * math.cos(angle_to_player)
+        dy = projectile_speed * math.sin(angle_to_player)
+        
+        # Create a new projectile object
+        projectile = Projectile(enemy_rect.centerx, enemy_rect.centery)
+        projectiles.append(projectile)
+
+    # Update all projectiles' positions
+    for i in range(len(projectiles)):
+        projectiles[i].x += dx
+        projectiles[i].y += dy
+        
+        # Draw each projectile
+        pygame.draw.circle(screen, (255, 0, 0), (int(projectiles[i].x), int(projectiles[i].y)), 10)
+
+    # Remove any projectiles that are off-screen
+    for i in reversed(range(len(projectiles))):
+        if not screen.get_rect().collidepoint(int(projectiles[i].x), int(projectiles[i].y)):
+            del projectiles[i]
 
     pygame.display.flip()
     clock.tick(60)
